@@ -6,6 +6,9 @@ import 'package:flutter/material.dart';
 /// and optionally shows a few example dots. Later it will be driven by
 /// real chord data.
 class FretboardDiagram extends StatelessWidget {
+  static const double _diagramWidth = 220;
+  static const double _sideGutterWidth = 64;
+
   /// Finger positions for the six strings, low E first. Use -1 for mute and
   /// 0 for open.
   final List<int> positions;
@@ -16,6 +19,7 @@ class FretboardDiagram extends StatelessWidget {
 
   /// If true, show the 'Fret x' label above the diagram instead of to the left.
   final bool showFretLabelAbove;
+
   /// If true, show the 'Fret x' label to the right of the diagram.
   final bool showFretLabelRight;
 
@@ -31,49 +35,89 @@ class FretboardDiagram extends StatelessWidget {
   Widget build(BuildContext context) {
     // Standard tuning notes for 6-string guitar (low E to high E)
     const tuningNotes = ['E', 'A', 'D', 'G', 'B', 'E'];
+
+    // Calculate min fret for label logic
+    final nonOpen = positions.where((f) => f > 0).toList();
+    int minFret = nonOpen.isEmpty ? 1 : nonOpen.reduce((a, b) => a < b ? a : b);
+    final showFretLabel = minFret > 1;
+
     return Padding(
       padding: const EdgeInsets.all(8.0),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            width: double.infinity,
-            height: 210, // Increased diagram height
-            child: AspectRatio(
-              aspectRatio: 2 / 3,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0), // Add horizontal padding
-                child: CustomPaint(
-                  painter: _FretboardPainter(positions: positions, fingers: fingers),
+      child: SizedBox(
+        width: _diagramWidth + (_sideGutterWidth * 2),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 4),
+            Stack(
+              alignment: Alignment.topCenter,
+              children: [
+                SizedBox(
+                  width: _diagramWidth + (_sideGutterWidth * 2),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Center(
+                        child: SizedBox(
+                          width: _diagramWidth,
+                          height: 210,
+                          child: CustomPaint(
+                            painter: _FretboardPainter(
+                              positions: positions,
+                              fingers: fingers,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Center(
+                        child: SizedBox(
+                          width: _diagramWidth,
+                          height: 22,
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: List.generate(
+                              6,
+                              (i) => Expanded(
+                                child: Center(
+                                  child: Text(
+                                    tuningNotes[i],
+                                    style: const TextStyle(
+                                      fontFamily: 'Roboto',
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w400,
+                                      color: Color(0xFF525252),
+                                      height: 1.2,
+                                      letterSpacing: 0,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            height: 22,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: List.generate(6, (i) =>
-                Expanded(
-                  child: Center(
+                if (showFretLabel)
+                  Positioned(
+                    right: 8,
+                    top: 40,
                     child: Text(
-                      tuningNotes[i],
+                      'Fret $minFret',
                       style: const TextStyle(
                         fontFamily: 'Roboto',
-                        fontSize: 14,
+                        fontSize: 13,
                         fontWeight: FontWeight.w400,
                         color: Color(0xFF525252),
-                        height: 1.2,
-                        letterSpacing: 0,
                       ),
                     ),
                   ),
-                ),
-              ),
+              ],
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
