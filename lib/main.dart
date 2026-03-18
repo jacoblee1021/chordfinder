@@ -16,6 +16,7 @@ class ChordFinderApp extends StatelessWidget {
       title: 'Chord Finder',
       theme: ThemeData(
         primarySwatch: Colors.blue,
+        scaffoldBackgroundColor: Color(0xFFF8F8F8), // Offwhite gray
       ),
       home: const HomePage(),
     );
@@ -139,7 +140,7 @@ class _HomePageState extends State<HomePage> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(24),
                         ),
-                        shadowColor: Colors.black.withOpacity(0.10),
+                        shadowColor: Colors.black.withOpacity(0.25),
                         child: Padding(
                           padding: const EdgeInsets.only(
                               left: 36, right: 36, top: 0, bottom: 12),
