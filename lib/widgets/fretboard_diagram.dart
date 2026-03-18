@@ -14,54 +14,64 @@ class FretboardDiagram extends StatelessWidget {
   /// drawn inside the dots. If omitted the dots are just black circles.
   final List<int>? fingers;
 
-  const FretboardDiagram({super.key, required this.positions, this.fingers});
+  /// If true, show the 'Fret x' label above the diagram instead of to the left.
+  final bool showFretLabelAbove;
+  /// If true, show the 'Fret x' label to the right of the diagram.
+  final bool showFretLabelRight;
+
+  const FretboardDiagram({
+    super.key,
+    required this.positions,
+    this.fingers,
+    this.showFretLabelAbove = false,
+    this.showFretLabelRight = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    // compute the lowest fretted note (non-zero and >0) to determine start.
-    final fretted = positions.where((f) => f > 0);
-    final startFret =
-        fretted.isEmpty ? 1 : fretted.reduce((a, b) => a < b ? a : b);
-    const labels = ['E', 'A', 'D', 'G', 'B', 'E'];
-
+    // Standard tuning notes for 6-string guitar (low E to high E)
+    const tuningNotes = ['E', 'A', 'D', 'G', 'B', 'E'];
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12.0, 6.0, 12.0, 12.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.all(8.0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                AspectRatio(
-                  aspectRatio: 2 / 3,
-                  child: CustomPaint(
-                    painter: _FretboardPainter(
-                        positions: positions, fingers: fingers),
-                  ),
+          SizedBox(
+            width: double.infinity,
+            height: 210, // Increased diagram height
+            child: AspectRatio(
+              aspectRatio: 2 / 3,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0), // Add horizontal padding
+                child: CustomPaint(
+                  painter: _FretboardPainter(positions: positions, fingers: fingers),
                 ),
-                const SizedBox(height: 8),
-                SizedBox(
-                  height: 24,
-                  child: Stack(
-                    children: List.generate(labels.length, (i) {
-                      final alignment = Alignment(-1.0 + 0.4 * i, 0);
-                      return Align(
-                        alignment: alignment,
-                        child: Text(labels[i],
-                            style: const TextStyle(
-                                fontSize: 12, fontWeight: FontWeight.bold)),
-                      );
-                    }),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.only(left: 20.0, top: 4.0),
-            child: Text('Fret $startFret',
-                style: const TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 22,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: List.generate(6, (i) =>
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      tuningNotes[i],
+                      style: const TextStyle(
+                        fontFamily: 'Roboto',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: Color(0xFF525252),
+                        height: 1.2,
+                        letterSpacing: 0,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -107,23 +117,21 @@ class _FretboardPainter extends CustomPainter {
     }
 
     // draw frets (horizontal lines), nut at top if start fret is 1
-    const nutHeight = 10.0;
     final nutPaint = Paint()
       ..color = Colors.black
-      ..style = PaintingStyle.fill;
-
+      ..strokeWidth = 6; // prominent nut
     for (int f = 0; f <= fretCount; f++) {
       final y = f * fretSpacing;
       final isNut = (f == 0 && minFret == 1);
       if (isNut) {
-        canvas.drawRect(Rect.fromLTWH(0, 0, size.width, nutHeight), nutPaint);
+        canvas.drawLine(Offset(0, y), Offset(size.width, y), nutPaint);
       } else {
         canvas.drawLine(Offset(0, y), Offset(size.width, y), linePaint);
       }
     }
 
-    // draw finger dots with increased radius
-    const double dotRadius = 14;
+    // draw finger dots with slightly smaller radius
+    const double dotRadius = 11;
     final dotPaint = Paint()..color = Colors.black;
     for (int s = 0; s < 6; s++) {
       final fret = positions[s];
